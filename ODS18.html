@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz ODS 18 — Saúde Mental</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --g1: #1D9E75; --g2: #0F6E56; --g3: #9FE1CB; --g4: #E1F5EE;
+      --b1: #185FA5; --b2: #378ADD; --b3: #B5D4F4; --b4: #E6F1FB;
+      --r1: #A32D2D; --r2: #E24B4A; --r3: #F09595; --r4: #FCEBEB;
+      --a1: #BA7517; --a2: #EF9F27; --a3: #FAC775; --a4: #FAEEDA;
+      --p1: #533AB7; --p2: #7F77DD; --p3: #CECBF6; --p4: #EEEDFE;
+      --text: #1a1a1a; --text-sec: #555; --border: rgba(0,0,0,0.12);
+      --surface: #fff; --bg: #f4f8f5;
+      --radius: 12px; --radius-lg: 18px;
+    }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 3rem;
+      color: var(--text);
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 15%, rgba(29,158,117,0.13) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 90% 80%, rgba(55,138,221,0.10) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    #app { position: relative; z-index: 1; width: 100%; max-width: 640px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 1px solid var(--border); padding: 2rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    }
+    /* INTRO */
+    .globe {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--g1) 0%, var(--b2) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px; margin: 0 auto 1.5rem;
+      box-shadow: 0 6px 20px rgba(29,158,117,0.35);
+    }
+    .badge-green {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--g4); color: var(--g2);
+      border: 1px solid var(--g3); border-radius: 20px;
+      padding: 4px 14px; font-size: 13px; font-weight: 700; margin-bottom: 1rem;
+    }
+    .intro-title { font-size: 28px; font-weight: 800; text-align: center; margin-bottom: .5rem; line-height: 1.2; }
+    .intro-title span { color: var(--g1); }
+    .intro-sub { font-size: 15px; color: var(--text-sec); text-align: center; margin-bottom: 1.75rem; line-height: 1.65; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.75rem; }
+    .stat-box { background: var(--g4); border-radius: var(--radius); padding: 14px; text-align: center; border: 1px solid var(--g3); }
+    .stat-num { font-size: 24px; font-weight: 800; color: var(--g1); }
+    .stat-label { font-size: 12px; color: var(--g2); margin-top: 2px; font-weight: 600; }
+    .btn-start {
+      width: 100%; padding: 15px; border-radius: var(--radius);
+      background: var(--g1); color: #fff; border: none;
+      font-size: 17px; font-weight: 700; cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 16px rgba(29,158,117,0.35);
+      transition: background .15s, transform .1s;
+    }
+    .btn-start:hover { background: var(--g2); transform: translateY(-1px); }
+    /* QUIZ */
+    .progress-wrap { height: 6px; background: rgba(0,0,0,0.08); border-radius: 9px; margin-bottom: 1.25rem; }
+    .progress-fill { height: 100%; border-radius: 9px; background: var(--g1); transition: width .4s ease; }
+    .q-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: .85rem; }
+    .q-tag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: var(--g4); color: var(--g2); border: 1px solid var(--g3); }
+    .score-badge { font-size: 13px; color: var(--text-sec); font-weight: 600; }
+    .score-badge span { color: var(--g1); font-weight: 800; }
+    .question-text { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; line-height: 1.5; }
+    .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
+    .opt {
+      padding: 13px 16px; border-radius: var(--radius);
+      border: 1.5px solid var(--border); background: var(--surface); cursor: pointer;
+      font-size: 14px; font-weight: 600; color: var(--text);
+      text-align: left; font-family: inherit;
+      transition: border-color .12s, background .12s;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .opt:hover:not([disabled]) { border-color: var(--g1); background: var(--g4); }
+    .opt .letter {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      background: var(--bg); color: var(--text-sec);
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+    }
+    .opt.correct { background: var(--g4); border-color: var(--g1); color: var(--g2); }
+    .opt.correct .letter { background: var(--g1); color: #fff; border-color: var(--g1); }
+    .opt.wrong { background: var(--r4); border-color: var(--r2); color: var(--r1); }
+    .opt.wrong .letter { background: var(--r2); color: #fff; border-color: var(--r2); }
+    .feedback-box { border-radius: var(--radius); padding: 13px 16px; margin-bottom: 1rem; font-size: 14px; line-height: 1.6; display: none; font-weight: 500; }
+    .feedback-box.show { display: block; }
+    .feedback-box.ok { background: var(--g4); color: var(--g2); border: 1px solid var(--g3); }
+    .feedback-box.no { background: var(--r4); color: var(--r1); border: 1px solid var(--r3); }
+    .feedback-label { font-weight: 800; font-size: 15px; margin-bottom: 5px; }
+    .btn-next {
+      width: 100%; padding: 13px; border-radius: var(--radius);
+      background: var(--surface); color: var(--text);
+      border: 1.5px solid var(--border); font-size: 15px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      display: none; transition: background .12s;
+    }
+    .btn-next.show { display: block; }
+    .btn-next:hover { background: var(--bg); }
+    /* RESULT */
+    .result-circle {
+      width: 120px; height: 120px; border-radius: 50%;
+      border: 5px solid var(--g1); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; margin: 0 auto 1.5rem; background: var(--g4);
+    }
+    .result-big { font-size: 32px; font-weight: 800; color: var(--g1); }
+    .result-sub-sm { font-size: 13px; color: var(--g2); font-weight: 600; }
+    .result-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: .5rem; }
+    .result-msg { font-size: 14px; color: var(--text-sec); text-align: center; margin-bottom: 1.5rem; line-height: 1.65; font-weight: 500; }
+    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .r-item { background: var(--bg); border-radius: var(--radius); padding: 14px; text-align: center; border: 1px solid var(--border); }
+    .r-num { font-size: 22px; font-weight: 800; }
+    .r-lbl { font-size: 11px; color: var(--text-sec); margin-top: 3px; font-weight: 600; }
+    .btn-again {
+      width: 100%; padding: 14px; border-radius: var(--radius);
+      background: var(--g1); color: #fff; border: none; font-size: 16px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 16px rgba(29,158,117,0.35); transition: background .15s, transform .1s;
+    }
+    .btn-again:hover { background: var(--g2); transform: translateY(-1px); }
+    /* CREDITOS */
+    .credits-section { margin-top: 3rem; text-align: center; }
+    .credits-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+    .credits-divider::before, .credits-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .credits-divider span { font-size: 12px; color: var(--text-sec); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .credits-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 1rem; }
+    .credit-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 20px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-width: 180px;
+    }
+    .credit-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0; }
+    .av-human { background: var(--b4); color: var(--b1); }
+    .av-ai { background: var(--p4); color: var(--p1); }
+    .credit-info { text-align: left; }
+    .credit-name { font-size: 14px; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .credit-role { font-size: 12px; color: var(--text-sec); margin-top: 2px; font-weight: 600; }
+    .credits-ods-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--g4); color: var(--g2); border: 1px solid var(--g3);
+      border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 700; margin-bottom: .5rem;
+    }
+    .credits-year { font-size: 12px; color: var(--text-sec); font-weight: 600; }
+    /* CONTATO */
+    .contact-section { margin-top: 2.5rem; }
+    .contact-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 1.75rem; box-shadow: 0 4px 24px rgba(0,0,0,0.07); text-align: center;
+    }
+    .contact-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--b4); color: var(--b1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin: 0 auto 1rem; border: 1px solid var(--b3);
+    }
+    .contact-title { font-size: 18px; font-weight: 800; margin-bottom: .4rem; }
+    .contact-sub { font-size: 14px; color: var(--text-sec); margin-bottom: 1.25rem; line-height: 1.6; font-weight: 500; }
+    .contact-input {
+      width: 100%; padding: 11px 14px; border-radius: var(--radius);
+      border: 1.5px solid var(--border); font-size: 14px;
+      font-family: inherit; font-weight: 600; color: var(--text);
+      background: var(--bg); margin-bottom: 10px;
+      transition: border-color .12s; outline: none; display: block;
+    }
+    .contact-input:focus { border-color: var(--b2); background: #fff; }
+    .contact-input.required-field { border-color: var(--b2); }
+    .field-label {
+      display: block; text-align: left; font-size: 12px; font-weight: 700;
+      color: var(--text-sec); margin-bottom: 4px; margin-top: 2px;
+    }
+    .field-label .req { color: var(--r2); }
+    .contact-textarea {
+      width: 100%; padding: 11px 14px; border-radius: var(--radius);
+      border: 1.5px solid var(--border); font-size: 14px;
+      font-family: inherit; font-weight: 600; color: var(--text);
+      background: var(--bg); margin-bottom: 10px; resize: vertical;
+      min-height: 100px; transition: border-color .12s; outline: none;
+    }
+    .contact-textarea:focus { border-color: var(--b2); background: #fff; }
+    .btn-send {
+      width: 100%; padding: 13px; border-radius: var(--radius);
+      background: var(--b2); color: #fff; border: none;
+      font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: background .15s, transform .1s;
+      box-shadow: 0 4px 14px rgba(55,138,221,0.35);
+    }
+    .btn-send:hover { background: var(--b1); transform: translateY(-1px); }
+    .btn-send:disabled { background: #aaa; box-shadow: none; cursor: not-allowed; transform: none; }
+    .contact-notice {
+      font-size: 12px; color: var(--text-sec); margin-top: 8px;
+      font-weight: 600; text-align: left;
+    }
+    .contact-success {
+      display: none; background: var(--g4); border: 1px solid var(--g3);
+      border-radius: var(--radius); padding: 12px 16px;
+      font-size: 14px; color: var(--g2); font-weight: 700; margin-top: 10px; text-align: left;
+    }
+    .contact-success.show { display: block; }
+    .contact-error {
+      display: none; background: var(--r4); border: 1px solid var(--r3);
+      border-radius: var(--radius); padding: 12px 16px;
+      font-size: 14px; color: var(--r1); font-weight: 700; margin-top: 10px; text-align: left;
+    }
+    .contact-error.show { display: block; }
+    @media (max-width: 500px) {
+      .card { padding: 1.25rem; }
+      .intro-title { font-size: 23px; }
+      .credits-cards { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TELA INICIAL -->
+  <div id="screen-intro" class="screen active">
+    <div class="card">
+      <div style="text-align:center">
+        <div class="globe">🧠</div>
+        <div class="badge-green">🌱 ODS 18 · Saúde Mental</div>
+        <h1 class="intro-title">Quanto você sabe sobre a <span>ODS 18</span>?</h1>
+        <p class="intro-sub">A ODS 18 é uma proposta para incluir a <strong>Saúde Mental</strong> como objetivo global de desenvolvimento sustentável da ONU. Teste seus conhecimentos!</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num">10</div><div class="stat-label">perguntas</div></div>
+        <div class="stat-box"><div class="stat-num">3</div><div class="stat-label">temas</div></div>
+        <div class="stat-box"><div class="stat-num">~5 min</div><div class="stat-label">duração</div></div>
+      </div>
+      <button class="btn-start" onclick="startGame()">Começar o quiz ▶</button>
+    </div>
+  </div>
+
+  <!-- TELA DO QUIZ -->
+  <div id="screen-quiz" class="screen">
+    <div class="card">
+      <div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="q-meta">
+        <span class="q-tag" id="q-tag">Questão 1 de 10</span>
+        <span class="score-badge">pontos: <span id="score-live">0</span></span>
+      </div>
+      <p class="question-text" id="question-text"></p>
+      <div class="options" id="options-list"></div>
+      <div class="feedback-box" id="feedback-box">
+        <div class="feedback-label" id="feedback-label"></div>
+        <div id="feedback-text"></div>
+      </div>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">Próxima pergunta →</button>
+    </div>
+  </div>
+
+  <!-- TELA DE RESULTADO -->
+  <div id="screen-result" class="screen">
+    <div class="card">
+      <div class="result-circle">
+        <div class="result-big" id="res-frac"></div>
+        <div class="result-sub-sm">acertos</div>
+      </div>
+      <h2 class="result-title" id="res-title"></h2>
+      <p class="result-msg" id="res-msg"></p>
+      <div class="result-grid">
+        <div class="r-item"><div class="r-num" id="res-correct" style="color:var(--g1)"></div><div class="r-lbl">corretas</div></div>
+        <div class="r-item"><div class="r-num" id="res-wrong" style="color:var(--r2)"></div><div class="r-lbl">erradas</div></div>
+        <div class="r-item"><div class="r-num" id="res-pct" style="color:var(--b2)"></div><div class="r-lbl">aproveit.</div></div>
+      </div>
+      <button class="btn-again" onclick="startGame()">🔄 Jogar novamente</button>
+    </div>
+  </div>
+
+  <!-- CRÉDITOS -->
+  <div class="credits-section">
+    <div class="credits-divider"><span>Criado por</span></div>
+    <div class="credits-cards">
+      <div class="credit-card">
+        <div class="credit-avatar av-human">AP</div>
+        <div class="credit-info">
+          <div class="credit-name">Arthur Pereira<br>Bolognesi</div>
+          <div class="credit-role">Criador do projeto</div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-avatar av-human">TH</div>
+        <div class="credit-info">
+          <div class="credit-name">Thiago Henrique<br>Pascoa</div>
+          <div class="credit-role">Criador do projeto</div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-avatar av-human">GV</div>
+        <div class="credit-info">
+          <div class="credit-name">Giullia<br>Verenguer</div>
+          <div class="credit-role">Criadora do projeto</div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-avatar av-human">NT</div>
+        <div class="credit-info">
+          <div class="credit-name">Nathiely<br>Tussinng</div>
+          <div class="credit-role">Criadora do projeto</div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-avatar av-ai">AI</div>
+        <div class="credit-info">
+          <div class="credit-name">Claude</div>
+          <div class="credit-role">Assistente de IA · Anthropic</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:1rem">
+      <div class="credits-ods-tag">🌱 ODS 18 — Saúde Mental para Todos</div><br>
+      <span class="credits-year">© 2025 — Agenda 2030 · ONU</span>
+    </div>
+  </div>
+
+  <!-- CONTATO -->
+  <div class="contact-section">
+    <div class="contact-card">
+      <div class="contact-icon">✉️</div>
+      <h2 class="contact-title">Entre em contato comigo!</h2>
+      <p class="contact-sub">
+        Gostou do quiz ou tem alguma dúvida sobre a ODS 18?<br>
+        Manda uma mensagem para o <strong>Arthur</strong>! 😊
+      </p>
+
+      <label class="field-label" for="contact-name">Nome <span class="req">*</span></label>
+      <input class="contact-input" id="contact-name" type="text" placeholder="Seu nome completo" />
+
+      <label class="field-label" for="contact-email">Seu e-mail <span class="req">*</span> — <em>obrigatório para que o Arthur possa te responder</em></label>
+      <input class="contact-input required-field" id="contact-email" type="email" placeholder="seuemail@exemplo.com" />
+
+      <label class="field-label" for="contact-subject">Assunto</label>
+      <input class="contact-input" id="contact-subject" type="text" placeholder="Ex: Dúvida sobre ODS 18" />
+
+      <label class="field-label" for="contact-msg">Mensagem <span class="req">*</span></label>
+      <textarea class="contact-textarea" id="contact-msg" placeholder="Escreva sua mensagem aqui..."></textarea>
+
+      <p class="contact-notice">⚠️ Campos com <span style="color:var(--r2)">*</span> são obrigatórios. Sem o seu e-mail não será possível responder!</p>
+
+      <button class="btn-send" id="btn-send" onclick="sendEmail()">📨 Enviar mensagem</button>
+      <div class="contact-success" id="contact-success">
+        ✅ Mensagem enviada com sucesso! Arthur vai te responder no e-mail que você informou. 😊
+      </div>
+      <div class="contact-error" id="contact-error">
+        ❌ Erro ao enviar. Verifique sua conexão e tente novamente.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+const ALL_QUESTIONS = [
+  {
+    tag: "Contexto global",
+    q: "Quantos Objetivos de Desenvolvimento Sustentável (ODS) foram estabelecidos pela ONU na Agenda 2030?",
+    opts: ["15 objetivos", "17 objetivos", "18 objetivos", "20 objetivos"],
+    correct: 1,
+    fb: "A ONU definiu 17 ODS na Agenda 2030, adotada em 2015. A ODS 18 é uma proposta de ampliação, ainda não oficial, que busca incluir a saúde mental como objetivo global."
+  },
+  {
+    tag: "ODS 18",
+    q: "O que propõe a chamada 'ODS 18'?",
+    opts: [
+      "Ampliar o acesso à internet em países em desenvolvimento",
+      "Incluir a saúde mental como objetivo global de desenvolvimento sustentável",
+      "Criar um fundo internacional para combate às drogas",
+      "Garantir paz e segurança em zonas de conflito"
+    ],
+    correct: 1,
+    fb: "A ODS 18 é uma proposta para incluir a saúde mental como um objetivo independente e prioritário da agenda global, reconhecendo sua importância para o desenvolvimento humano sustentável."
+  },
+  {
+    tag: "Dados globais",
+    q: "Aproximadamente quantas pessoas no mundo vivem com algum transtorno mental, segundo a OMS?",
+    opts: ["100 milhões", "300 milhões", "970 milhões", "1,5 bilhão"],
+    correct: 2,
+    fb: "Segundo a OMS, cerca de 970 milhões de pessoas vivem com algum transtorno mental globalmente — número que cresceu durante a pandemia de COVID-19."
+  },
+  {
+    tag: "Brasil",
+    q: "Como o Brasil se posiciona globalmente no número de casos de ansiedade?",
+    opts: [
+      "É o país com mais casos de ansiedade no mundo",
+      "Ocupa a 10ª posição mundial",
+      "Está abaixo da média global",
+      "Não há dados suficientes sobre o Brasil"
+    ],
+    correct: 0,
+    fb: "O Brasil é o país com maior prevalência de transtornos de ansiedade no mundo, afetando cerca de 9,3% da população, segundo dados da OMS."
+  },
+  {
+    tag: "Prevenção",
+    q: "Qual das ações abaixo está diretamente relacionada à promoção da saúde mental nas comunidades?",
+    opts: [
+      "Apenas tratamentos medicamentosos",
+      "Redes de apoio social, escuta ativa e acesso a serviços de saúde",
+      "Isolamento e evitar situações de estresse",
+      "Prática exclusiva de exercícios físicos intensos"
+    ],
+    correct: 1,
+    fb: "A promoção da saúde mental envolve abordagem ampla: redes de apoio, escuta, acesso a serviços, educação e redução do estigma. Nenhum fator isolado é suficiente."
+  },
+  {
+    tag: "Dados globais",
+    q: "Segundo a OMS, qual porcentagem dos gastos globais em saúde é destinada à saúde mental?",
+    opts: ["Menos de 2%", "Cerca de 10%", "Em torno de 20%", "Mais de 30%"],
+    correct: 0,
+    fb: "Menos de 2% dos orçamentos de saúde no mundo são destinados à saúde mental, o que evidencia o subfinanciamento crônico da área e a urgência de incluí-la nas agendas globais."
+  },
+  {
+    tag: "ODS 18",
+    q: "Por que a saúde mental não está explicitamente entre os 17 ODS originais da ONU?",
+    opts: [
+      "Porque saúde mental não é considerada relevante",
+      "Porque está subentendida na ODS 3 (Saúde e Bem-Estar), mas pouco desenvolvida",
+      "Porque os países votaram contra sua inclusão",
+      "Porque não há evidências científicas sobre sua importância"
+    ],
+    correct: 1,
+    fb: "A saúde mental está mencionada de forma geral na ODS 3, mas sem metas específicas robustas. Defensores da ODS 18 argumentam que ela precisa de um objetivo próprio para receber atenção e investimento adequados."
+  },
+  {
+    tag: "Brasil",
+    q: "Qual serviço público brasileiro é referência no atendimento em saúde mental na atenção primária?",
+    opts: [
+      "UPA (Unidade de Pronto Atendimento)",
+      "CAPS (Centro de Atenção Psicossocial)",
+      "SAMU (Serviço de Atendimento Móvel de Urgência)",
+      "Hospital Geral"
+    ],
+    correct: 1,
+    fb: "O CAPS é o principal dispositivo do SUS para atenção em saúde mental, oferecendo atendimento multiprofissional para pessoas com transtornos mentais graves e dependência química."
+  },
+  {
+    tag: "Estigma",
+    q: "O que é 'estigma' no contexto da saúde mental?",
+    opts: [
+      "Um diagnóstico médico específico",
+      "Preconceito e discriminação sofridos por pessoas com transtornos mentais",
+      "Um medicamento antidepressivo",
+      "Técnica de relaxamento mindfulness"
+    ],
+    correct: 1,
+    fb: "O estigma é um dos maiores obstáculos à saúde mental: preconceitos e discriminação impedem que pessoas busquem ajuda, agravam sofrimentos e violam direitos. Combatê-lo é essencial para a ODS 18."
+  },
+  {
+    tag: "Ação",
+    q: "Qual das alternativas abaixo representa uma ação concreta alinhada com os objetivos da ODS 18?",
+    opts: [
+      "Ignorar sinais de sofrimento em colegas para não se intrometer",
+      "Compartilhar conteúdos que romantizam transtornos mentais",
+      "Falar abertamente sobre saúde mental e reduzir o estigma no dia a dia",
+      "Aconselhar pessoas a evitar tratamento profissional"
+    ],
+    correct: 2,
+    fb: "A ODS 18 defende acesso, conscientização e redução do estigma. Falar abertamente sobre saúde mental, acolher e incentivar busca por ajuda são atitudes que qualquer pessoa pode tomar."
+  }
+];
+
+let questions = [], current = 0, score = 0, answered = false;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  questions = shuffle(ALL_QUESTIONS);
+  current = 0; score = 0; answered = false;
+  show('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  answered = false;
+  document.getElementById('q-tag').textContent = q.tag + ' · ' + (current + 1) + ' de ' + questions.length;
+  document.getElementById('score-live').textContent = score;
+  document.getElementById('question-text').textContent = q.q;
+  document.getElementById('progress-fill').style.width = ((current / questions.length) * 100) + '%';
+  document.getElementById('feedback-box').className = 'feedback-box';
+  document.getElementById('btn-next').className = 'btn-next';
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.opts.forEach(function(opt, i) {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.dataset.i = i;
+    btn.innerHTML = '<span class="letter">' + letters[i] + '</span>' + opt;
+    btn.onclick = function() { selectAnswer(i); };
+    list.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach(function(o) { o.disabled = true; });
+  const fb = document.getElementById('feedback-box');
+  const lbl = document.getElementById('feedback-label');
+  const txt = document.getElementById('feedback-text');
+  if (idx === q.correct) {
+    score++;
+    opts[idx].classList.add('correct');
+    fb.className = 'feedback-box ok show';
+    lbl.textContent = '✅ Resposta correta!';
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[q.correct].classList.add('correct');
+    fb.className = 'feedback-box no show';
+    lbl.textContent = '❌ Resposta incorreta';
+  }
+  txt.textContent = q.fb;
+  document.getElementById('score-live').textContent = score;
+  const btnNext = document.getElementById('btn-next');
+  btnNext.className = 'btn-next show';
+  btnNext.textContent = current < questions.length - 1 ? 'Próxima pergunta →' : 'Ver resultado →';
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= questions.length) showResult();
+  else renderQuestion();
+}
+
+function showResult() {
+  document.getElementById('progress-fill').style.width = '100%';
+  const total = questions.length;
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('res-frac').textContent = score + '/' + total;
+  document.getElementById('res-correct').textContent = score;
+  document.getElementById('res-wrong').textContent = total - score;
+  document.getElementById('res-pct').textContent = pct + '%';
+  let title, msg;
+  if (pct >= 90) {
+    title = '🏆 Excelente! Você é um(a) especialista!';
+    msg = 'Seu conhecimento sobre saúde mental e a ODS 18 é impressionante. Continue espalhando consciência!';
+  } else if (pct >= 70) {
+    title = '🌟 Muito bem! Ótimo conhecimento!';
+    msg = 'Você conhece bem o tema. Com um pouco mais de estudo, chegará ao nível especialista!';
+  } else if (pct >= 50) {
+    title = '💪 Bom começo! Continue aprendendo';
+    msg = 'Você tem uma base interessante sobre a ODS 18. Vale aprofundar seus conhecimentos!';
+  } else {
+    title = '📚 Hora de descobrir mais!';
+    msg = 'A saúde mental é um tema fundamental. Que tal pesquisar mais sobre a ODS 18 e sua importância global?';
+  }
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-msg').textContent = msg;
+  show('screen-result');
+}
+
+async function sendEmail() {
+  const name    = document.getElementById('contact-name').value.trim();
+  const email   = document.getElementById('contact-email').value.trim();
+  const subject = document.getElementById('contact-subject').value.trim();
+  const msg     = document.getElementById('contact-msg').value.trim();
+
+  document.getElementById('contact-success').classList.remove('show');
+  document.getElementById('contact-error').classList.remove('show');
+
+  if (!name) { alert('Por favor, preencha seu nome!'); return; }
+  if (!email) { alert('Por favor, preencha seu e-mail — sem ele o Arthur não consegue te responder!'); return; }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) { alert('Por favor, insira um e-mail válido para que o Arthur possa te responder!'); return; }
+  if (!msg) { alert('Por favor, escreva sua mensagem!'); return; }
+
+  const btn = document.getElementById('btn-send');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  try {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('email', email);
+    formData.append('_subject', subject || 'Mensagem do Quiz ODS 18');
+    formData.append('_replyto', email);
+    formData.append('message', msg);
+    formData.append('_captcha', 'false');
+
+    const response = await fetch('https://formsubmit.co/ajax/arthurpereirabolognesi29@gmail.com', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success === 'true' || result.success === true) {
+      document.getElementById('contact-success').classList.add('show');
+      document.getElementById('contact-name').value = '';
+      document.getElementById('contact-email').value = '';
+      document.getElementById('contact-subject').value = '';
+      document.getElementById('contact-msg').value = '';
+    } else {
+      throw new Error('Falha no envio');
+    }
+  } catch (err) {
+    document.getElementById('contact-error').classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📨 Enviar mensagem';
+  }
+}
+</script>
+</body>
+</html>
